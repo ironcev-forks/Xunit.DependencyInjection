@@ -13,17 +13,21 @@ namespace Xunit.DependencyInjection
 
         protected sealed override ITestFrameworkExecutor CreateExecutor(AssemblyName assemblyName)
         {
-            var host = new HostBuilder()
+            var builder = Host.CreateDefaultBuilder(Environment.GetCommandLineArgs())
                 .ConfigureServices(services => services.AddSingleton<ITestOutputHelperAccessor, TestOutputHelperAccessor>())
-                .ConfigureServices(services => ConfigureServices(assemblyName, services))
-                .Build();
+                .ConfigureServices(services => ConfigureServices(assemblyName, services));
 
+            ConfigureHost(builder);
+
+            var host = builder.Build();
             using (var scope = host.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
                 Configure(scope.ServiceProvider);
 
             return new DependencyInjectionTestFrameworkExecutor(host,
                 assemblyName, SourceInformationProvider, DiagnosticMessageSink);
         }
+
+        protected virtual void ConfigureHost(IHostBuilder builder) { }
 
         protected virtual void ConfigureServices(AssemblyName assemblyName, IServiceCollection services) => ConfigureServices(services);
 
